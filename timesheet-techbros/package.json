@@ -1,0 +1,26 @@
+{
+  "name": "timesheet-techbros-api",
+  "version": "1.0.0",
+  "description": "API Backend para Timesheet TechBros App",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Building Netlify Functions...'",
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "keywords": [
+    "timesheet",
+    "api",
+    "netlify",
+    "functions",
+    "techbros"
+  ],
+  "author": "TechBros Team",
+  "license": "MIT"
+}

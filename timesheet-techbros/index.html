@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Aplicación de control de tiempo y seguimiento GPS">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Timesheet">
+    
+    <title>Timesheet App</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon e iconos -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16x16.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .timer-display {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .login-form {
+            display: block;
+        }
+
+        .main-menu {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f7971e, #ffd200);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #868e96);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .status-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .working-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .status-idle {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .status-working {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-break {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .install-prompt {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .install-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .online {
+            background: #28a745;
+        }
+
+        .offline {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div id="connection-status" class="connection-status online">🟢 Online</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1 id="app-title">Timesheet App</h1>
+        </div>
+
+        <!-- Install Prompt -->
+        <div id="install-prompt" class="install-prompt">
+            <p id="install-text">¡Instala la app en tu teléfono!</p>
+            <button id="install-btn" class="install-btn">Instalar App</button>
+        </div>
+
+        <div id="status-message" class="status-message"></div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p id="loading-text">Conectando al servidor...</p>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login-form" class="login-form">
+            <div class="form-group">
+                <label for="username" id="username-label">Nombre de Usuario</label>
+                <input type="text" id="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password" id="password-label">Contraseña</label>
+                <input type="password" id="password" required autocomplete="current-password">
+            </div>
+            <button class="btn btn-primary" onclick="login()" id="login-btn">Iniciar Sesión</button>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="main-menu">
+            <div id="timer-display" class="timer-display">
+                <div id="timer-text">08:00:00</div>
+                <div style="font-size: 14px; margin-top: 5px;" id="timer-status">Listo para comenzar</div>
+            </div>
+
+            <div id="working-status" class="working-status status-idle">
+                <span id="status-text">Listo para trabajar</span>
+            </div>
+
+            <button class="btn btn-success" onclick="startWorkingDay()" id="start-work-btn">Iniciar Día de Trabajo</button>
+            <button class="btn btn-danger" onclick="finishWorkingDay()" id="finish-work-btn" disabled>Finalizar Día de Trabajo</button>
+            <button class="btn btn-warning" onclick="startBreak()" id="start-break-btn" disabled>Iniciar Descanso</button>
+            <button class="btn btn-warning" onclick="stopBreak()" id="stop-break-btn" disabled style="display:none;">Finalizar Descanso</button>
+            <button class="btn btn-info" onclick="showExpensesModal()" id="expenses-btn">Gastos</button>
+            <button class="btn btn-secondary" onclick="showSetupModal()" id="setup-btn">Configuración</button>
+            <button class="btn btn-secondary" onclick="logout()" id="logout-btn">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Kilometers Modal -->
+    <div id="kilometers-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('kilometers-modal')">&times;</span>
+            <h3 id="km-modal-title">Insertar Kilómetros Actuales del Coche</h3>
+            <div class="form-group">
+                <label for="kilometers" id="km-label">Kilómetros</label>
+                <input type="number" id="kilometers" step="0.1" required>
+            </div>
+            <button class="btn btn-primary" onclick="submitKilometers()" id="submit-km-btn">Enviar</button>
+        </div>
+    </div>
+
+    <!-- Expenses Modal -->
+    <div id="expenses-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('expenses-modal')">&times;</span>
+            <h3 id="expenses-modal-title">Agregar Gasto</h3>
+            <div class="form-group">
+                <label for="expense-description" id="expense-desc-label">Descripción del Gasto</label>
+                <input type="text" id="expense-description" required>
+            </div>
+            <div class="form-group">
+                <label for="euro-amount" id="euro-amount-label">Monto en Euros</label>
+                <input type="number" id="euro-amount" step="0.01" required>
+            </div>
+            <button class="btn btn-primary" onclick="submitExpense()" id="submit-expense-btn">Enviar</button>
+        </div>
+    </div>
+
+    <!-- Setup Modal -->
+    <div id="setup-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('setup-modal')">&times;</span>
+            <h3 id="setup-modal-title">Configuración</h3>
+            <div class="form-group">
+                <label for="language-select" id="language-label">Idioma</label>
+                <select id="language-select" onchange="changeLanguage()">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="ar">العربية</option>
+                    <option value="uk">Українська</option>
+                    <option value="ru">Русский</option>
+                    <option value="id">Bahasa Indonesia</option>
+                    <option value="ro">Română</option>
+                    <option value="zh">中文</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()" id="save-settings-btn">Guardar Configuración</button>
+        </div>
+    </div>
+
+    <script>
+        // ✅ CONFIGURACIÓN DEL SERVIDOR - TU URL ESPECÍFICA
+        const API_BASE_URL = 'https://timesheet-techbros.netlify.app/.netlify/functions';
+        
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-prompt').style.display = 'block';
+        });
+
+        document.getElementById('install-btn').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        document.getElementById('install-prompt').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+
+        // App state
+        let currentUser = null;
+        let authToken = null;
+        let workingStartTime = null;
+        let timerInterval = null;
+        let isPaused = false;
+        let pauseStartTime = null;
+        let totalPausedTime = 0;
+        let currentAction = null;
+        let gpxInterval = null;
+        let currentLanguage = 'es';
+
+        // Detectar idioma del sistema
+        function detectSystemLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            const langCode = browserLang.split('-')[0];
+            
+            // Idiomas soportados
+            const supportedLanguages = ['en', 'es', 'ar', 'uk', 'ru', 'id', 'ro', 'zh'];
+            
+            if (supportedLanguages.includes(langCode)) {
+                return langCode;
+            }
+            
+            // Fallback a español
+            return 'es';
+        }
+
+        // Monitoreo de conexión
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connection-status');
+            if (navigator.onLine) {
+                statusElement.textContent = '🟢 Online';
+                statusElement.className = 'connection-status online';
+            } else {
+                statusElement.textContent = '🔴 Offline';
+                statusElement.className = 'connection-status offline';
+            }
+        }
+
+        window.addEventListener('online', () => {
+            updateConnectionStatus();
+            showStatus('Conexión restaurada. Sincronizando...', 'success');
+            syncOfflineData();
+        });
+
+        window.addEventListener('offline', () => {
+            updateConnectionStatus();
+            showStatus('Sin conexión. Modo offline activado.', 'warning');
+        });
+
+        // Language translations
+        const translations = {
+            en: {
+                'app-title': 'Timesheet App',
+                'username-label': 'Username',
+                'password-label': 'Password',
+                'login-btn': 'Login',
+                'start-work-btn': 'Start Working Day',
+                'finish-work-btn': 'Finish Working Day',
+                'start-break-btn': 'Day Break Start',
+                'stop-break-btn': 'Day Break Stop',
+                'expenses-btn': 'Expenses',
+                'setup-btn': 'Setup',
+                'logout-btn': 'Logout',
+                'km-modal-title': 'Insert Current Car Kilometers',
+                'km-label': 'Kilometers',
+                'submit-km-btn': 'Submit',
+                'expenses-modal-title': 'Add Expense',
+                'expense-desc-label': 'Expense Description',
+                'euro-amount-label': 'Euro Amount',
+                'submit-expense-btn': 'Submit',
+                'setup-modal-title': 'Setup',
+                'language-label': 'Language',
+                'save-settings-btn': 'Save Settings',
+                'status-text': 'Ready to work',
+                'timer-status': 'Ready to start',
+                'install-text': 'Install the app on your phone!',
+                'loading-text': 'Connecting to server...'
+            },
+            es: {
+                'app-title': 'App de Control de Tiempo',
+                'username-label': 'Nombre de Usuario',
+                'password-label': 'Contraseña',
+                'login-btn': 'Iniciar Sesión',
+                'start-work-btn': 'Iniciar Día de Trabajo',
+                'finish-work-btn': 'Finalizar Día de Trabajo',
+                'start-break-btn': 'Iniciar Descanso',
+                'stop-break-btn': 'Finalizar Descanso',
+                'expenses-btn': 'Gastos',
+                'setup-btn': 'Configuración',
+                'logout-btn': 'Cerrar Sesión',
+                'km-modal-title': 'Insertar Kilómetros Actuales del Coche',
+                'km-label': 'Kilómetros',
+                'submit-km-btn': 'Enviar',
+                'expenses-modal-title': 'Agregar Gasto',
+                'expense-desc-label': 'Descripción del Gasto',
+                'euro-amount-label': 'Monto en Euros',
+                'submit-expense-btn': 'Enviar',
+                'setup-modal-title': 'Configuración',
+                'language-label': 'Idioma',
+                'save-settings-btn': 'Guardar Configuración',
+                'status-text': 'Listo para trabajar',
+                'timer-status': 'Listo para comenzar',
+                'install-text': '¡Instala la app en tu teléfono!',
+                'loading-text': 'Conectando al servidor...'
+            }
+        };
+
+        // API Functions
+        async function apiRequest(endpoint, method = 'GET', data = null) {
+            showLoading(true);
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (authToken) {
+                    options.headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`API Error: ${response.status} - ${errorData}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Request failed:', error);
+                
+                // Fallback a localStorage en caso de error de conexión
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    showStatus('Sin conexión. Trabajando offline.', 'warning');
+                    return null;
+                }
+                
+                throw error;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // Initialize app
+        function init() {
+            detectAndSetLanguage();
+            checkGeolocation();
+            loadUserData();
+            checkAuthToken();
+            updateConnectionStatus();
+        }
+
+        function detectAndSetLanguage() {
+            // Prioridad: 1. Guardado, 2. Sistema, 3. Español
+            const savedLang = localStorage.getItem('selectedLanguage');
+            const systemLang = detectSystemLanguage();
+            
+            currentLanguage = savedLang || systemLang;
+            document.getElementById('language-select').value = currentLanguage;
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const lang = translations[currentLanguage] || translations['es'];
+            for (const [key, value] of Object.entries(lang)) {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.tagName === 'INPUT' && element.type !== 'button') {
+                        element.placeholder = value;
+                    } else {
+                        element.textContent = value;
+                    }
+                }
+            }
+        }
+
+        function changeLanguage() {
+            currentLanguage = document.getElementById('language-select').value;
+            updateLanguage();
+        }
+
+        async function saveSettings() {
+            localStorage.setItem('selectedLanguage', currentLanguage);
+            
+            try {
+                await apiRequest('/user/settings', 'PUT', {
+                    language: currentLanguage
+                });
+                showStatus('¡Configuración guardada exitosamente!', 'success');
+            } catch (error) {
+                // Guardar localmente si falla el API
+                showStatus('Configuración guardada localmente.', 'warning');
+            }
+            
+            closeModal('setup-modal');
+        }
+
+        function checkGeolocation() {
+            if (!navigator.geolocation) {
+                showStatus('La geolocalización no es compatible con este navegador.', 'error');
+            }
+        }
+
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                    position => resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }),
+                    error => reject(error),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                );
+            });
+        }
+
+        function checkAuthToken() {
+            authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                // Verificar si el token es válido
+                apiRequest('/auth-verify')
+                    .then(result => {
+                        if (result && result.valid) {
+                            currentUser = result.user;
+                            showMainMenu();
+                        } else {
+                            localStorage.removeItem('authToken');
+                            authToken = null;
+                        }
+                    })
+                    .catch(() => {
+                        localStorage.removeItem('authToken');
+                        authToken = null;
+                    });
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showStatus('Por favor ingresa usuario y contraseña', 'error');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/auth-login', 'POST', {
+                    username: username,
+                    password: password
+                });
+
+                if (response && response.success) {
+                    authToken = response.token;
+                    currentUser = response.user;
+                    
+                    // Guardar token y usuario
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    showMainMenu();
+                    showStatus('¡Inicio de sesión exitoso!', 'success');
+                } else {
+                    throw new Error(response?.message || 'Credenciales incorrectas');
+                }
+            } catch (error) {
+                if (error.message.includes('fetch') || !navigator.onLine) {
+                    // Modo offline - fallback a localStorage
+                    fallbackOfflineLogin(username, password);
+                } else {
+                    showStatus('Usuario o contraseña incorrectos', 'error');
+                }
+            }
+        }
+
+        function fallbackOfflineLogin(username, password) {
+            // Sistema de respaldo cuando no hay conexión
+            const offlineUsers = JSON.parse(localStorage.getItem('offlineUsers') || '[]');
+            const user = offlineUsers.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                showMainMenu();
+                showStatus('Acceso offline exitoso', 'warning');
+            } else {
+                showStatus('Sin conexión. Usuario no encontrado en cache offline.', 'error');
+            }
+        }
+
+        function showMainMenu() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'block';
+        }
+
+        function logout() {
+            currentUser = null;
+            authToken = null;
+            workingStartTime = null;
+            clearInterval(timerInterval);
+            clearInterval(gpxInterval);
+            
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('timer-display').style.display = 'none';
+            resetButtons();
+        }
+
+        function loadUserData() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    document.getElementById('username').value = userData.username || '';
+                } catch (e) {
+                    localStorage.removeItem('currentUser');
+                }
+            }
+        }
+
+        async function startWorkingDay() {
+            currentAction = 'start';
+            try {
+                const modal = document.getElementById('kilometers-modal');
+                modal.style.display = 'block';
+            } catch (error) {
+                showStatus('Error al iniciar día de trabajo: ' + error.message, 'error');
+            }
+        }
+
+        async function finishWorkingDay() {
+            currentAction = 'finish';
+            try {
+                const modal = document.getElementById('kilometers-modal');
+                modal.style.display = 'block';
+            } catch (error) {
+                showStatus('Error al finalizar día de trabajo: ' + error.message, 'error');
+            }
+        }
+
+        async function submitKilometers() {
+            const kilometers = document.getElementById('kilometers').value;
+            if (!kilometers) {
+                showStatus('Por favor ingresa los kilómetros', 'error');
+                return;
+            }
+
+            try {
+                const location = await getCurrentLocation();
+                const now = new Date();
+                
+                const data = {
+                    user: currentUser.username,
+                    date: now.toISOString().split('T')[0],
+                    time: now.toTimeString().split(' ')[0],
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    kilometers: parseFloat(kilometers),
+                    description: currentAction === 'start' ? 'START WORKING DAY' : 'FINISH WORKING DAY'
+                };
+
+                // Intentar guardar en API
+                try {
+                    await apiRequest('/timesheet', 'POST', data);
+                    showStatus('¡Datos guardados en el servidor!', 'success');
+                } catch (apiError) {
+                    // Fallback a localStorage
+                    let timesheetData = JSON.parse(localStorage.getItem('timesheetData') || '[]');
+                    timesheetData.push(data);
+                    localStorage.setItem('timesheetData', JSON.stringify(timesheetData));
+                    showStatus('Datos guardados localmente (sin conexión)', 'warning');
+                }
+                
+                if (currentAction === 'start') {
+                    workingStartTime = now;
+                    startTimer();
+                    startGPXTracking();
+                    document.getElementById('start-work-btn').disabled = true;
+                    document.getElementById('finish-work-btn').disabled = false;
+                    document.getElementById('start-break-btn').disabled = false;
+                    updateWorkingStatus('Trabajando', 'status-working');
+                } else if (currentAction === 'finish') {
+                    stopTimer();
+                    stopGPXTracking();
+                    resetButtons();
+                    updateWorkingStatus('Día Finalizado', 'status-idle');
+                }
+
+                closeModal('kilometers-modal');
+                document.getElementById('kilometers').value = '';
+                
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer-display');
+            timerDisplay.style.display = 'block';
+            
+            const workHours = 8 * 60 * 60; // 8 hours in seconds
+            let secondsLeft = workHours;
+
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    secondsLeft--;
+                    
+                    if (secondsLeft <= 0) {
+                        clearInterval(timerInterval);
+                        showStatus('¡Día de trabajo completado!', 'success');
+                        return;
+                    }
+
+                    const hours = Math.floor(secondsLeft / 3600);
+                    const minutes = Math.floor((secondsLeft % 3600) / 60);
+                    const seconds = secondsLeft % 60;
+
+                    document.getElementById('timer-text').textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').style.display = 'none';
+        }
+
+        async function startBreak() {
+            try {
+                const location = await getCurrentLocation();
+                const now = new Date();
+                
+                const data = {
+                    user: currentUser.username,
+                    date: now.toISOString().split('T')[0],
+                    time: now.toTimeString().split(' ')[0],
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    description: 'DAY PAUSE START'
+                };
+
+                try {
+                    await apiRequest('/timesheet', 'POST', data);
+                } catch (apiError) {
+                    let timesheetData = JSON.parse(localStorage.getItem('timesheetData') || '[]');
+                    timesheetData.push(data);
+                    localStorage.setItem('timesheetData', JSON.stringify(timesheetData));
+                }
+                
+                isPaused = true;
+                pauseStartTime = now;
+                
+                document.getElementById('start-break-btn').style.display = 'none';
+                document.getElementById('stop-break-btn').style.display = 'block';
+                document.getElementById('stop-break-btn').disabled = false;
+                
+                updateWorkingStatus('En Descanso', 'status-break');
+                showStatus('¡Descanso iniciado!', 'success');
+                
+            } catch (error) {
+                showStatus('Error al iniciar descanso: ' + error.message, 'error');
+            }
+        }
+
+        async function stopBreak() {
+            try {
+                const location = await getCurrentLocation();
+                const now = new Date();
+                
+                const data = {
+                    user: currentUser.username,
+                    date: now.toISOString().split('T')[0],
+                    time: now.toTimeString().split(' ')[0],
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    description: 'DAY PAUSE STOP'
+                };
+
+                try {
+                    await apiRequest('/timesheet', 'POST', data);
+                } catch (apiError) {
+                    let timesheetData = JSON.parse(localStorage.getItem('timesheetData') || '[]');
+                    timesheetData.push(data);
+                    localStorage.setItem('timesheetData', JSON.stringify(timesheetData));
+                }
+                
+                isPaused = false;
+                if (pauseStartTime) {
+                    totalPausedTime += now - pauseStartTime;
+                }
+                
+                document.getElementById('start-break-btn').style.display = 'block';
+                document.getElementById('stop-break-btn').style.display = 'none';
+                
+                updateWorkingStatus('Trabajando', 'status-working');
+                showStatus('¡Descanso finalizado!', 'success');
+                
+            } catch (error) {
+                showStatus('Error al finalizar descanso: ' + error.message, 'error');
+            }
+        }
+
+        function startGPXTracking() {
+            const now = new Date();
+            const dateStr = now.getFullYear() + '_' + 
+                           (now.getMonth() + 1).toString().padStart(2, '0') + '_' + 
+                           now.getDate().toString().padStart(2, '0');
+            
+            gpxInterval = setInterval(async () => {
+                if (!isPaused) {
+                    try {
+                        const location = await getCurrentLocation();
+                        const timestamp = new Date();
+                        
+                        const gpxData = {
+                            filename: `GPX_${dateStr}_${currentUser.username}`,
+                            user: currentUser.username,
+                            date: timestamp.toISOString().split('T')[0],
+                            time: timestamp.toTimeString().split(' ')[0],
+                            latitude: location.latitude,
+                            longitude: location.longitude
+                        };
+                        
+                        try {
+                            await apiRequest('/gpx', 'POST', gpxData);
+                        } catch (apiError) {
+                            let allGpxData = JSON.parse(localStorage.getItem('gpxData') || '[]');
+                            allGpxData.push(gpxData);
+                            localStorage.setItem('gpxData', JSON.stringify(allGpxData));
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error de seguimiento GPX:', error);
+                    }
+                }
+            }, 60000); // Every minute
+        }
+
+        function stopGPXTracking() {
+            clearInterval(gpxInterval);
+        }
+
+        function showExpensesModal() {
+            document.getElementById('expenses-modal').style.display = 'block';
+        }
+
+        function showSetupModal() {
+            document.getElementById('setup-modal').style.display = 'block';
+        }
+
+        async function submitExpense() {
+            const description = document.getElementById('expense-description').value;
+            const amount = document.getElementById('euro-amount').value;
+
+            if (!description || !amount) {
+                showStatus('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const location = await getCurrentLocation();
+                const now = new Date();
+                
+                const expenseData = {
+                    user: currentUser.username,
+                    date: now.toISOString().split('T')[0],
+                    time: now.toTimeString().split(' ')[0],
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    description: description,
+                    amount: parseFloat(amount)
+                };
+
+                try {
+                    await apiRequest('/expenses', 'POST', expenseData);
+                    showStatus('¡Gasto guardado en el servidor!', 'success');
+                } catch (apiError) {
+                    let allExpenseData = JSON.parse(localStorage.getItem('expenseData') || '[]');
+                    allExpenseData.push(expenseData);
+                    localStorage.setItem('expenseData', JSON.stringify(allExpenseData));
+                    showStatus('Gasto guardado localmente (sin conexión)', 'warning');
+                }
+                
+                closeModal('expenses-modal');
+                document.getElementById('expense-description').value = '';
+                document.getElementById('euro-amount').value = '';
+                
+            } catch (error) {
+                showStatus('Error al guardar gasto: ' + error.message, 'error');
+            }
+        }
+
+        function updateWorkingStatus(text, statusClass) {
+            const statusElement = document.getElementById('working-status');
+            const statusText = document.getElementById('status-text');
+            
+            statusElement.className = 'working-status ' + statusClass;
+            statusText.textContent = text;
+        }
+
+        function resetButtons() {
+            document.getElementById('start-work-btn').disabled = false;
+            document.getElementById('finish-work-btn').disabled = true;
+            document.getElementById('start-break-btn').disabled = true;
+            document.getElementById('start-break-btn').style.display = 'block';
+            document.getElementById('stop-break-btn').style.display = 'none';
+            updateWorkingStatus('Listo para trabajar', 'status-idle');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = `status-message status-${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Sincronización automática cuando se recupera la conexión
+        async function syncOfflineData() {
+            try {
+                showStatus('Sincronizando datos offline...', 'warning');
+                
+                // Sincronizar timesheet
+                const timesheetData = JSON.parse(localStorage.getItem('timesheetData') || '[]');
+                for (const item of timesheetData) {
+                    try {
+                        await apiRequest('/timesheet', 'POST', item);
+                    } catch (error) {
+                        console.error('Error syncing timesheet item:', error);
+                        return; // Stop sync if there's an error
+                    }
+                }
+                if (timesheetData.length > 0) {
+                    localStorage.removeItem('timesheetData');
+                }
+
+                // Sincronizar GPX
+                const gpxData = JSON.parse(localStorage.getItem('gpxData') || '[]');
+                for (const item of gpxData) {
+                    try {
+                        await apiRequest('/gpx', 'POST', item);
+                    } catch (error) {
+                        console.error('Error syncing GPX item:', error);
+                        return;
+                    }
+                }
+                if (gpxData.length > 0) {
+                    localStorage.removeItem('gpxData');
+                }
+
+                // Sincronizar gastos
+                const expenseData = JSON.parse(localStorage.getItem('expenseData') || '[]');
+                for (const item of expenseData) {
+                    try {
+                        await apiRequest('/expenses', 'POST', item);
+                    } catch (error) {
+                        console.error('Error syncing expense item:', error);
+                        return;
+                    }
+                }
+                if (expenseData.length > 0) {
+                    localStorage.removeItem('expenseData');
+                }
+
+                const totalSynced = timesheetData.length + gpxData.length + expenseData.length;
+                if (totalSynced > 0) {
+                    showStatus(`${totalSynced} registros sincronizados correctamente`, 'success');
+                }
+            } catch (error) {
+                showStatus('Error en la sincronización', 'error');
+            }
+        }
+
+        // Initialize app when page loads
+        window.onload = init;
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
