@@ -1,0 +1,6 @@
+# Redirects para Netlify
+/*    /index.html   200
+/admin    /admin.html   200
+
+# API Functions
+/.netlify/functions/*  /.netlify/functions/:splat  200
